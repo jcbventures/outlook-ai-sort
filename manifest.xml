@@ -10,8 +10,8 @@
   <DefaultLocale>nl-NL</DefaultLocale>
   <DisplayName DefaultValue="AI Mapadvies"/>
   <Description DefaultValue="Stel automatisch de juiste map voor op basis van de e-mailinhoud."/>
-  <IconUrl DefaultValue="https://jcbventures.github.io/outlook-ai-sort/icon.png"/>
-  <HighResolutionIconUrl DefaultValue="https://jcbventures.github.io/outlook-ai-sort/icon.png"/>
+  <IconUrl DefaultValue="https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg/64px-Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg.png"/>
+  <HighResolutionIconUrl DefaultValue="https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg/64px-Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg.png"/>
   <SupportUrl DefaultValue="https://jcbventures.github.io/outlook-ai-sort"/>
 
   <Hosts>
