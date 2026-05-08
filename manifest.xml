@@ -10,9 +10,9 @@
   <DefaultLocale>nl-NL</DefaultLocale>
   <DisplayName DefaultValue="AI Mapadvies"/>
   <Description DefaultValue="Stel automatisch de juiste map voor op basis van de e-mailinhoud."/>
-  <IconUrl DefaultValue="https://YOUR_GITHUB_USERNAME.github.io/outlook-ai-sort/icon.png"/>
-  <HighResolutionIconUrl DefaultValue="https://YOUR_GITHUB_USERNAME.github.io/outlook-ai-sort/icon.png"/>
-  <SupportUrl DefaultValue="https://YOUR_GITHUB_USERNAME.github.io/outlook-ai-sort"/>
+  <IconUrl DefaultValue="https://jcbventures.github.io/outlook-ai-sort/icon.png"/>
+  <HighResolutionIconUrl DefaultValue="https://jcbventures.github.io/outlook-ai-sort/icon.png"/>
+  <SupportUrl DefaultValue="https://jcbventures.github.io/outlook-ai-sort"/>
 
   <Hosts>
     <Host Name="Mailbox"/>
@@ -27,7 +27,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://YOUR_GITHUB_USERNAME.github.io/outlook-ai-sort/taskpane.html"/>
+        <SourceLocation DefaultValue="https://jcbventures.github.io/outlook-ai-sort/taskpane.html"/>
         <RequestedHeight>550</RequestedHeight>
       </DesktopSettings>
     </Form>
