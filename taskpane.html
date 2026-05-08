@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Mapadvies</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #0078d4; --green: #107c10; --orange: #d83b01;
+      --grey: #605e5c; --bg: #f3f2f1; --card: #ffffff;
+      --border: #e1dfdd; --text: #201f1e; --subtle: #605e5c;
+    }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 13px; color: var(--text); background: var(--bg);
+      height: 100vh; display: flex; flex-direction: column;
+    }
+    .topbar {
+      background: var(--blue); color: #fff; padding: 10px 14px;
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .topbar-title { font-weight: 700; font-size: 14px; }
+    .topbar-gear  { cursor: pointer; font-size: 16px; opacity: .85; }
+    .topbar-gear:hover { opacity: 1; }
+    .content { flex: 1; overflow-y: auto; padding: 14px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border: none; border-radius: 6px;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: filter .15s; white-space: nowrap;
+    }
+    .btn:hover  { filter: brightness(.92); }
+    .btn:active { filter: brightness(.85); }
+    .btn:disabled { opacity: .4; cursor: default; filter: none; }
+    .btn-blue   { background: var(--blue);   color: #fff; }
+    .btn-green  { background: var(--green);  color: #fff; }
+    .btn-orange { background: var(--orange); color: #fff; }
+    .btn-grey   { background: #edebe9; color: var(--text); }
+    .btn-outline{ background: #fff; color: var(--blue); border: 1px solid var(--blue); }
+    .btn-full   { width: 100%; justify-content: center; }
+    .btn-sm     { padding: 5px 10px; font-size: 12px; }
+    .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+    .home-tile {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 12px; cursor: pointer; text-align: center;
+      transition: box-shadow .15s, border-color .15s;
+    }
+    .home-tile:hover { border-color: var(--blue); box-shadow: 0 2px 8px rgba(0,120,212,.15); }
+    .home-tile-icon  { font-size: 28px; margin-bottom: 8px; }
+    .home-tile-label { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    .home-tile-sub   { font-size: 11px; color: var(--subtle); line-height: 1.4; }
+    .section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--subtle); margin: 12px 0 6px;
+    }
+    .conf-wrap { background: #edebe9; border-radius: 99px; height: 5px; margin: 8px 0 3px; }
+    .conf-bar  { height: 5px; border-radius: 99px; background: linear-gradient(90deg,var(--blue),#00b4d8); transition: width .5s; }
+    .conf-lbl  { font-size: 11px; color: var(--subtle); }
+    .folder-search {
+      width: 100%; padding: 6px 10px; border: 1px solid var(--border);
+      border-radius: 6px; font-size: 12px; margin-bottom: 6px;
+    }
+    .folder-search:focus { outline: none; border-color: var(--blue); }
+    .folder-list {
+      max-height: 150px; overflow-y: auto;
+      border: 1px solid var(--border); border-radius: 6px; background: var(--card);
+    }
+    .folder-item {
+      padding: 7px 12px; cursor: pointer; font-size: 12px;
+      border-bottom: 1px solid #f3f2f1;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .folder-item:last-child { border-bottom: none; }
+    .folder-item:hover  { background: #f0f6ff; }
+    .folder-item.active { background: #deecf9; font-weight: 600; color: var(--blue); }
+    .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .badge {
+      display: inline-block; padding: 3px 8px;
+      border-radius: 99px; font-size: 11px; font-weight: 600;
+    }
+    .badge-reply   { background: #ffe7ce; color: #8a3500; }
+    .badge-task    { background: #dff6dd; color: var(--green); }
+    .badge-review  { background: #e8f4fd; color: #005a9e; }
+    .badge-fyi     { background: #f3f2f1; color: var(--grey); }
+    .badge-meeting { background: #ede7f6; color: #4527a0; }
+    .status     { font-size: 12px; padding: 8px 12px; border-radius: 6px; margin-top: 8px; }
+    .status-ok  { background: #dff6dd; color: var(--green); }
+    .status-err { background: #fde7e9; color: #a4262c; }
+    .status-inf { background: #e8f4fd; color: #005a9e; }
+    .progress-wrap { background: #edebe9; border-radius: 99px; height: 6px; margin: 8px 0; }
+    .progress-bar  { height: 6px; border-radius: 99px; background: var(--blue); transition: width .3s; }
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid #ccc; border-top-color: var(--blue);
+      border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .mail-from    { font-size: 12px; color: var(--subtle); margin-bottom: 2px; }
+    .mail-subject { font-weight: 700; font-size: 14px; word-break: break-word; margin-bottom: 6px; }
+    .action-summary {
+      font-size: 13px; line-height: 1.5;
+      background: #f3f2f1; border-radius: 6px; padding: 8px 10px; margin-top: 8px;
+    }
+    .folder-suggestion { font-size: 16px; font-weight: 700; color: var(--blue); margin: 4px 0 2px; }
+    label { display: block; font-size: 11px; font-weight: 700; color: var(--grey); margin-bottom: 4px; }
+    input[type="text"], input[type="password"] {
+      width: 100%; padding: 7px 10px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-size: 13px; margin-bottom: 12px;
+    }
+    input:focus { outline: none; border-color: var(--blue); }
+    #folder-panel { display: none; margin-top: 10px; }
+    .done-icon { font-size: 48px; text-align: center; margin: 20px 0 10px; }
+    .done-text { text-align: center; font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .done-sub  { text-align: center; font-size: 12px; color: var(--subtle); }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">📁 AI Mapadvies</span>
+  <span class="topbar-gear" onclick="showScreen('settings')" title="Instellingen">⚙️</span>
+</div>
+
+<div class="content">
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen">
+    <div class="home-grid">
+      <div class="home-tile" onclick="startSingleMode()">
+        <div class="home-tile-icon">🔍</div>
+        <div class="home-tile-label">Huidige mail</div>
+        <div class="home-tile-sub">Analyseer de geopende e-mail</div>
+      </div>
+      <div class="home-tile" onclick="startBulkMode()">
+        <div class="home-tile-icon">🧹</div>
+        <div class="home-tile-label">Postvak opschonen</div>
+        <div class="home-tile-sub">Loop inbox door, mail voor mail</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SINGLE MODE -->
+  <div id="screen-single" class="screen">
+    <div id="single-loading"><span class="spinner"></span> Analyseren…</div>
+    <div id="single-result" style="display:none">
+      <div class="card">
+        <div class="mail-from"    id="s-from"></div>
+        <div class="mail-subject" id="s-subject"></div>
+        <span class="badge"       id="s-badge"></span>
+        <div class="action-summary" id="s-summary"></div>
+      </div>
+      <div class="section-title">Aanbevolen map</div>
+      <div class="card">
+        <div class="folder-suggestion" id="s-folder">—</div>
+        <div class="conf-wrap"><div class="conf-bar" id="s-conf-bar" style="width:0%"></div></div>
+        <div class="conf-lbl" id="s-conf-lbl"></div>
+        <div style="margin-top:4px;font-size:12px;color:var(--subtle)" id="s-reason"></div>
+      </div>
+      <div class="section-title">Andere map kiezen</div>
+      <input class="folder-search" placeholder="🔍 Zoek map…" oninput="filterFolders('s-list', this.value)"/>
+      <div class="folder-list" id="s-list"></div>
+      <div class="action-row">
+        <button class="btn btn-green"  onclick="moveEmailSingle()">✅ Verplaats</button>
+        <button class="btn btn-grey"   onclick="showScreen('home')">← Terug</button>
+      </div>
+      <div id="s-status"></div>
+    </div>
+    <div id="single-error" style="display:none">
+      <div class="status status-err" id="s-err-msg"></div><br/>
+      <button class="btn btn-outline btn-sm" onclick="startSingleMode()">🔄 Opnieuw</button>
+    </div>
+  </div>
+
+  <!-- BULK MODE -->
+  <div id="screen-bulk" class="screen">
+    <div id="bulk-loading"><span class="spinner"></span> Inbox ophalen…</div>
+
+    <div id="bulk-card" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span id="bulk-progress-label" style="font-size:12px;color:var(--subtle)">Mail 1 van ?</span>
+        <button class="btn btn-grey btn-sm" onclick="showScreen('home')">✕ Stoppen</button>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" id="bulk-progress-bar" style="width:0%"></div></div>
+
+      <div class="card" style="margin-top:8px">
+        <div class="mail-from"    id="b-from"></div>
+        <div class="mail-subject" id="b-subject"></div>
+        <span class="badge"       id="b-badge"></span>
+        <div class="action-summary" id="b-summary"><span class="spinner"></span> AI analyseert…</div>
+      </div>
+
+      <!-- Three actions -->
+      <div class="action-row">
+        <button class="btn btn-green"  id="b-btn-action" onclick="bulkDoAction()"      disabled>✅ Actie</button>
+        <button class="btn btn-grey"   id="b-btn-skip"   onclick="bulkSkip()"          disabled>⏭️ Overslaan</button>
+        <button class="btn btn-orange" id="b-btn-move"   onclick="bulkToggleFolder()"  disabled>📁 Verplaatsen</button>
+      </div>
+
+      <!-- Folder panel -->
+      <div id="folder-panel">
+        <div class="section-title">Aanbevolen map</div>
+        <div class="card" style="padding:10px 12px">
+          <div class="folder-suggestion" id="b-folder">—</div>
+          <div class="conf-wrap"><div class="conf-bar" id="b-conf-bar" style="width:0%"></div></div>
+          <div class="conf-lbl" id="b-conf-lbl"></div>
+          <div style="margin-top:4px;font-size:12px;color:var(--subtle)" id="b-reason"></div>
+        </div>
+        <div class="section-title">Andere map kiezen</div>
+        <input class="folder-search" placeholder="🔍 Zoek map…" oninput="filterFolders('b-list', this.value)"/>
+        <div class="folder-list" id="b-list"></div>
+        <div class="action-row" style="margin-top:10px">
+          <button class="btn btn-blue btn-sm" onclick="bulkConfirmMove()">📁 Bevestig verplaatsing</button>
+          <button class="btn btn-grey btn-sm" onclick="bulkToggleFolder()">Annuleren</button>
+        </div>
+      </div>
+
+      <div id="b-status"></div>
+    </div>
+
+    <div id="bulk-done" style="display:none">
+      <div class="done-icon">🎉</div>
+      <div class="done-text">Inbox opgeschoond!</div>
+      <div class="done-sub" id="bulk-done-stats"></div><br/>
+      <button class="btn btn-blue btn-full" onclick="showScreen('home')">← Terug naar start</button>
+    </div>
+
+    <div id="bulk-error" style="display:none">
+      <div class="status status-err" id="b-err-msg"></div><br/>
+      <button class="btn btn-outline btn-sm" onclick="startBulkMode()">🔄 Opnieuw</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="screen-settings" class="screen">
+    <label for="inp-key">Claude API-sleutel</label>
+    <input type="password" id="inp-key" placeholder="sk-ant-api03-…"/>
+    <label for="inp-ctx">Extra context (optioneel)</label>
+    <input type="text" id="inp-ctx" placeholder="Bijv: investeerder, energie- en mobiliteitsthema's"/>
+    <button class="btn btn-blue btn-full" onclick="saveSettings()">💾 Opslaan</button>
+    <div id="settings-status" style="margin-top:8px"></div><br/>
+    <button class="btn btn-grey btn-sm" onclick="showScreen('home')">← Terug</button>
+  </div>
+
+</div>
+<script src="taskpane.js"></script>
+</body>
+</html>
